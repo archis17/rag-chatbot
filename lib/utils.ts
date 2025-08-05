@@ -1,7 +1,15 @@
+
 export function cosineSimilarity(a: number[], b: number[]): number {
-  const dotProduct = a.reduce((sum, ai, i) => sum + ai * b[i], 0);
-  const magnitudeA = Math.sqrt(a.reduce((sum, ai) => sum + ai * ai, 0));
-  const magnitudeB = Math.sqrt(b.reduce((sum, bi) => sum + bi * bi, 0));
-  if (magnitudeA === 0 || magnitudeB === 0) return 0;
-  return dotProduct / (magnitudeA * magnitudeB);
+  if (a.length !== b.length) {
+    throw new Error("Vectors must be the same length");
+  }
+  let dot = 0;
+  let magA = 0;
+  let magB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    magA += a[i] * a[i];
+    magB += b[i] * b[i];
+  }
+  return magA === 0 || magB === 0 ? 0 : dot / (Math.sqrt(magA) * Math.sqrt(magB));
 }

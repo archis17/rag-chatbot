@@ -1,9 +1,15 @@
-// app/page.tsx or pages/index.tsx
-import Chat from "@/components/Chat";
+import Chat from '../components/Chat';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Sports AI Assistant - RAG Chatbot',
+  description: 'Get instant answers about sports, teams, players, and matches with our AI-powered assistant',
+  keywords: 'sports, AI, chatbot, football, basketball, tennis, Olympics, stats',
+};
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <main>
       <Chat />
     </main>
   );
