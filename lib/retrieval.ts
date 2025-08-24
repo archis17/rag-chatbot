@@ -10,7 +10,7 @@ export interface Doc {
 }
 
 const dbName = process.env.MONGODB_DB_NAME || "sportsrag";
-const collectionName = "documents";
+const collectionName = "ipl_matches";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let embedder: any;
