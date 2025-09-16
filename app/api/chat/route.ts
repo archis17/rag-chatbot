@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { retrieveRelevantDocs } from "@/lib/retrieval";
 import { ChatGroq } from "@langchain/groq";
 import { PromptTemplate } from "@langchain/core/prompts";
+import { webSearchTavily, formatWebResults } from "@/lib/websearch";
 
 // Helper to format chat history
 function formatChatHistory(messages: { role: string; content: string }[]) {
@@ -33,7 +34,19 @@ export async function POST(req: NextRequest) {
     const chatHistory = messages.slice(0, -1);
 
     const topDocs = await retrieveRelevantDocs(latestMessage.content, 3);
-    const contextText = topDocs.map(d => d.text).join("\n");
+    let contextText = topDocs.map(d => d.text).join("\n");
+
+    // Optional web search for fresh info
+    const enableWeb = (process.env.ENABLE_WEB_SEARCH ?? "false").toLowerCase() === "true";
+    if (enableWeb) {
+      try {
+        const webResults = await webSearchTavily(latestMessage.content, 3);
+        const webBlock = formatWebResults(webResults);
+        if (webBlock) {
+          contextText = `${contextText}\n\n${webBlock}`.trim();
+        }
+      } catch {}
+    }
 
     const prompt = PromptTemplate.fromTemplate(RAG_TEMPLATE);
     const formattedPrompt = await prompt.format({
@@ -42,9 +55,11 @@ export async function POST(req: NextRequest) {
       input: latestMessage.content,
     });
 
+    const selectedModel = process.env.GROQ_MODEL ?? "llama-3.1-70b-versatile";
+
     const llm = new ChatGroq({
-      model: "llama3-70b-8192",
-      temperature: 0.3,
+      model: selectedModel,
+      temperature: 0.6,
       apiKey: process.env.GROQ_API_KEY,
     });
 
@@ -56,7 +71,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ response: response.content });
   } catch (err: unknown) {
     let errorMessage = "An unexpected error occurred.";
-    if (err instanceof Error) errorMessage = err.message;
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    let statusCode = 500;
+    if (err instanceof Error) {
+      errorMessage = err.message;
+      const lower = errorMessage.toLowerCase();
+      if (
+        lower.includes("model_decommissioned") ||
+        lower.includes("decommissioned") ||
+        lower.includes("model not found") ||
+        lower.includes("unknown model")
+      ) {
+        statusCode = 400;
+        errorMessage =
+          `The configured Groq model is unavailable or deprecated. ` +
+          `Set a supported model via GROQ_MODEL (e.g., \"llama-3.1-70b-versatile\", \"llama-3.1-8b-instant\", or \"deepseek-r1-distill-llama-70b\").`;
+      }
+    }
+    return NextResponse.json({ error: errorMessage }, { status: statusCode });
   }
 }
