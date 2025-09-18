@@ -59,14 +59,14 @@ export default function Home() {
       <section className="max-w-6xl mx-auto px-6 -mt-16 relative z-10">
         <GoatsGrid
           items={[
-            { name: 'Lionel Messi', sport: 'Football', src: '/goats/messi.jpg' },
-            { name: 'Cristiano Ronaldo', sport: 'Football', src: '/goats/ronaldo.jpg' },
-            { name: 'Michael Jordan', sport: 'Basketball', src: '/goats/jordan.jpg' },
-            { name: 'Serena Williams', sport: 'Tennis', src: '/goats/serena.jpg' },
-            { name: 'Usain Bolt', sport: 'Athletics', src: '/goats/bolt.jpg' },
-            { name: 'Sachin Tendulkar', sport: 'Cricket', src: '/goats/sachin.jpg' },
-            { name: 'Roger Federer', sport: 'Tennis', src: '/goats/federer.jpg' },
-            { name: 'Muhammad Ali', sport: 'Boxing', src: '/goats/ali.jpg' },
+            { name: 'Lionel Messi', sport: 'Football', src: '/images/messi.jpg' },
+            { name: 'Cristiano Ronaldo', sport: 'Football', src: '/images/ronaldo.jpg' },
+            { name: 'Michael Jordan', sport: 'Basketball', src: '/images/jordan.jpg' },
+            { name: 'Serena Williams', sport: 'Tennis', src: '/images/serena.jpg' },
+            { name: 'Usain Bolt', sport: 'Athletics', src: '/images/bolt.jpg' },
+            { name: 'Sachin Tendulkar', sport: 'Cricket', src: '/images/sachin.jpg' },
+            { name: 'Roger Federer', sport: 'Tennis', src: '/images/federer.jpg' },
+            { name: 'Muhammad Ali', sport: 'Boxing', src: '/images/ali.jpg' },
           ]}
         />
       </section>
