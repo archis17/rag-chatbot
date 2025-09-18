@@ -24,6 +24,21 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Load existing history for the signed-in user
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/messages", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.messages)) {
+            setMessages(data.messages);
+          }
+        }
+      } catch {}
+    })();
+  }, []);
+
   async function handleSend() {
     if (!input.trim()) return;
     setError(null);
@@ -59,6 +74,7 @@ export default function Chat() {
       };
       
       setMessages((prev) => [...prev, botMsg]);
+      // Optimistically persisted by API; we also keep local state updated
     } catch (err: unknown) {
       let errorMessage = "Failed to send message.";
       if (err instanceof Error) {

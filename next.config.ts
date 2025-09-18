@@ -1,7 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // any other settings
+  experimental: {
+    optimizePackageImports: [
+      "react",
+      "react-dom",
+      "@radix-ui/react-tooltip",
+      "@radix-ui/react-scroll-area",
+      "@clerk/nextjs",
+    ],
+  },
 };
 
 module.exports = nextConfig;

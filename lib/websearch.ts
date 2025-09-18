@@ -22,7 +22,6 @@ export async function webSearchTavily(query: string, maxResults: number = 3): Pr
       search_depth: "basic",
     }),
     // Avoid hanging the route on slow networks
-    // @ts-ignore: RequestInit extension for Next runtime
     next: { revalidate: 0 },
   });
 
@@ -30,12 +29,19 @@ export async function webSearchTavily(query: string, maxResults: number = 3): Pr
   const data = await response.json().catch(() => null);
   if (!data || !Array.isArray(data.results)) return [];
 
-  return data.results
+  type TavilyItem = {
+    title?: unknown;
+    url?: unknown;
+    content?: unknown;
+    snippet?: unknown;
+  };
+
+  return (data.results as TavilyItem[])
     .slice(0, maxResults)
-    .map((r: any) => ({
+    .map((r) => ({
       title: String(r.title ?? ""),
       url: String(r.url ?? ""),
-      content: String(r.content ?? r.snippet ?? ""),
+      content: String((r.content ?? r.snippet) ?? ""),
     }));
 }
 
