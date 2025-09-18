@@ -1,5 +1,7 @@
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { getMongoCollection } from "@/lib/mongodb";
 import { retrieveRelevantDocs } from "@/lib/retrieval";
 import { ChatGroq } from "@langchain/groq";
 import { PromptTemplate } from "@langchain/core/prompts";
@@ -24,6 +26,10 @@ AI:`;
 // Named export for POST method (required in app router)
 export async function POST(req: NextRequest) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { messages } = await req.json() as { messages: { role: string; content: string }[] };
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -67,6 +73,27 @@ export async function POST(req: NextRequest) {
       { role: "system", content: "You are a helpful sports chatbot." },
       { role: "user", content: formattedPrompt },
     ]);
+
+    // Persist messages to MongoDB
+    const dbName = process.env.MONGODB_DB_NAME || "sportsrag";
+    type ChatMessage = { role: "user" | "assistant"; content: string; timestamp: number };
+    type ChatDoc = { userId: string; createdAt: Date; messages: ChatMessage[] };
+    const collection = await getMongoCollection<ChatDoc>(dbName, "chats");
+
+    const now = Date.now();
+    const toSave: ChatMessage[] = [
+      { role: "user", content: latestMessage.content, timestamp: now },
+      { role: "assistant", content: String(response.content), timestamp: now },
+    ];
+
+    await collection.updateOne(
+      { userId },
+      {
+        $setOnInsert: { userId, createdAt: new Date() },
+        $push: { messages: { $each: toSave } },
+      },
+      { upsert: true }
+    );
 
     return NextResponse.json({ response: response.content });
   } catch (err: unknown) {
