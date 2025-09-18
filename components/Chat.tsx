@@ -17,6 +17,7 @@ export default function Chat() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showContextIndex, setShowContextIndex] = useState<number | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -100,17 +101,25 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="flex flex-col h-screen relative">
+      {/* Ambient Background */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50" />
+        <div className="absolute inset-0 opacity-60" style={{backgroundImage:'radial-gradient(800px 400px at 20% 10%, rgba(59,130,246,0.08), transparent), radial-gradient(600px 300px at 80% 20%, rgba(99,102,241,0.08), transparent), radial-gradient(600px 300px at 50% 90%, rgba(14,165,233,0.08), transparent)'}} />
+      </div>
+
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">🏆</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">Sports AI Assistant</h1>
-              <p className="text-blue-100 text-sm">Ask me anything about sports!</p>
+      <header className="bg-white/60 backdrop-blur sticky top-0 z-20 border-b border-slate-200">
+        <div className="max-w-4xl mx-auto px-6 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-xl flex items-center justify-center shadow-sm">
+                <span className="text-2xl">🏆</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-slate-800">Sports AI Assistant</h1>
+                <p className="text-slate-500 text-xs">Smart insights. Legendary knowledge.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -118,7 +127,7 @@ export default function Chat() {
 
       {/* Chat Container */}
       <div className="flex-1 flex justify-center p-4 overflow-hidden">
-        <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden">
+        <div className="w-full max-w-4xl bg-white/80 backdrop-blur rounded-2xl shadow-xl border border-slate-200 flex flex-col overflow-hidden">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.length === 0 && (
@@ -175,8 +184,8 @@ export default function Chat() {
                     <div
                       className={`inline-block px-4 py-3 rounded-2xl max-w-full ${
                         msg.role === "user"
-                          ? "bg-blue-500 text-white rounded-br-md"
-                          : "bg-gray-100 text-gray-800 rounded-bl-md"
+                          ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-br-md shadow"
+                          : "bg-slate-100 text-slate-800 rounded-bl-md shadow"
                       }`}
                     >
                       {msg.role === "assistant" ? (
@@ -189,12 +198,12 @@ export default function Chat() {
                               ol: ({children}) => <ol className="mb-2 last:mb-0 pl-4">{children}</ol>,
                               li: ({children}) => <li className="mb-1">{children}</li>,
                               code: ({children}) => (
-                                <code className="bg-gray-200 px-1 py-0.5 rounded text-sm font-mono">
+                                <code className="bg-slate-200 px-1 py-0.5 rounded text-sm font-mono">
                                   {children}
                                 </code>
                               ),
                               pre: ({children}) => (
-                                <pre className="bg-gray-800 text-gray-100 p-3 rounded-lg overflow-x-auto my-2">
+                                <pre className="bg-slate-900 text-slate-100 p-3 rounded-lg overflow-x-auto my-2">
                                   {children}
                                 </pre>
                               ),
@@ -283,39 +292,43 @@ export default function Chat() {
           )}
 
           {/* Input Area */}
-          <div className="border-t bg-gray-50 p-4">
-            <div className="flex items-end space-x-3">
-              <div className="flex-1">
-                <textarea
-                  rows={1}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  placeholder="Ask about sports, teams, players, scores..."
-                  disabled={loading}
-                  style={{
-                    minHeight: '44px',
-                    maxHeight: '120px',
-                  }}
-                  onInput={(e) => {
-                    const target = e.target as HTMLTextAreaElement;
-                    target.style.height = '44px';
-                    target.style.height = Math.min(target.scrollHeight, 120) + 'px';
-                  }}
-                />
+          <div className="sticky bottom-0 border-t bg-white/80 backdrop-blur p-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-xs text-slate-500 mb-2">Press Enter to send • Shift+Enter for new line</div>
+              <div className="flex items-end space-x-3">
+                <div className="flex-1">
+                  <textarea
+                    rows={1}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="w-full border border-slate-300 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed shadow-sm"
+                    placeholder="Ask about sports, teams, players, scores..."
+                    disabled={loading}
+                    style={{
+                      minHeight: '44px',
+                      maxHeight: '120px',
+                    }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = '44px';
+                      target.style.height = Math.min(target.scrollHeight, 120) + 'px';
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={handleSend}
+                  disabled={loading || input.trim() === ""}
+                  className="bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-600 hover:to-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center space-x-2 shadow"
+                  aria-label="Send message"
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <span>Send ✈️</span>
+                  )}
+                </button>
               </div>
-              <button
-                onClick={handleSend}
-                disabled={loading || input.trim() === ""}
-                className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center space-x-2"
-              >
-                {loading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  <span>Send</span>
-                )}
-              </button>
             </div>
           </div>
         </div>
