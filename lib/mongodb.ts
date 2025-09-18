@@ -1,5 +1,4 @@
 
-import "dotenv/config";
 import { MongoClient, Collection, Db, Document } from "mongodb";
 
 // --- Validate environment variable ---

@@ -1,5 +1,13 @@
 import { getMongoCollection } from "./mongodb";
-import { pipeline } from "@xenova/transformers";
+// Lazy import to avoid edge bundling issues on Vercel
+let _pipeline: typeof import("@xenova/transformers").pipeline | null = null;
+async function getPipeline() {
+  if (!_pipeline) {
+    const mod = await import("@xenova/transformers");
+    _pipeline = mod.pipeline;
+  }
+  return _pipeline!;
+}
 import { cosineSimilarity } from "./utils";
 
 // Inline Doc type here if needed
@@ -16,6 +24,7 @@ const collectionName = "ipl_matches";
 let embedder: any;
 async function getEmbedder() {
   if (!embedder) {
+    const pipeline = await getPipeline();
     embedder = await pipeline("feature-extraction", "Xenova/all-mpnet-base-v2");
   }
   return embedder;
