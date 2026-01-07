@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
         if (webBlock) {
           contextText = `${contextText}\n\n${webBlock}`.trim();
         }
-      } catch {}
+      } catch { }
     }
 
     const prompt = PromptTemplate.fromTemplate(RAG_TEMPLATE);
@@ -61,11 +61,11 @@ export async function POST(req: NextRequest) {
       input: latestMessage.content,
     });
 
-    const selectedModel = process.env.GROQ_MODEL ?? "llama-3.1-70b-versatile";
+    const selectedModel = process.env.GROQ_MODEL || "llama-3.1-70b-versatile";
 
     const llm = new ChatGroq({
       model: selectedModel,
-      temperature: 0.6,
+      temperature: 0.5,
       apiKey: process.env.GROQ_API_KEY,
     });
 
@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ response: response.content });
   } catch (err: unknown) {
+    console.error("Chat API Error:", err);
     let errorMessage = "An unexpected error occurred.";
     let statusCode = 500;
     if (err instanceof Error) {

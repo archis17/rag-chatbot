@@ -18,7 +18,7 @@ export interface Doc {
 }
 
 const dbName = process.env.MONGODB_DB_NAME || "sportsrag";
-const collectionName = "ipl_matches";
+const collectionName = "football_matches";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let embedder: any;
@@ -32,7 +32,9 @@ async function getEmbedder() {
 
 export async function retrieveRelevantDocs(queryText: string, topK = 3) {
   const collection = await getMongoCollection<Doc>(dbName, collectionName);
-  const docs = await collection.find({}).toArray();
+  // Ideally use Atlas Vector Search here ($vectorSearch), but falling back to in-memory cosine sim for small datasets
+  // For production, this MUST be $vectorSearch aggregation
+  const docs = await collection.find({}).limit(5000).toArray(); // Limit to prevent OOM on large datasets
 
   const embedder = await getEmbedder();
   const queryEmbeddingResult = await embedder(queryText, { pooling: "mean", normalize: true });
