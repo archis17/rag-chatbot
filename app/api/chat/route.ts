@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getMongoCollection } from "@/lib/mongodb";
 import { retrieveRelevantDocs } from "@/lib/retrieval";
-import { ChatGroq } from "@langchain/groq";
+import { ChatBedrockConverse } from "@langchain/aws";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { webSearchTavily, formatWebResults } from "@/lib/websearch";
 
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
         if (webBlock) {
           contextText = `${contextText}\n\n${webBlock}`.trim();
         }
-      } catch {}
+      } catch { }
     }
 
     const prompt = PromptTemplate.fromTemplate(RAG_TEMPLATE);
@@ -61,12 +61,17 @@ export async function POST(req: NextRequest) {
       input: latestMessage.content,
     });
 
-    const selectedModel = process.env.GROQ_MODEL ?? "llama-3.1-70b-versatile";
+    // Default to Claude 3 Sonnet if not specified
+    const modelId = process.env.BEDROCK_MODEL_ID ?? "anthropic.claude-3-sonnet-20240229-v1:0";
 
-    const llm = new ChatGroq({
-      model: selectedModel,
-      temperature: 0.6,
-      apiKey: process.env.GROQ_API_KEY,
+    const llm = new ChatBedrockConverse({
+      model: modelId,
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
+      temperature: 0.5,
     });
 
     const response = await llm.invoke([
@@ -97,21 +102,15 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ response: response.content });
   } catch (err: unknown) {
+    console.error("Chat API Error:", err);
     let errorMessage = "An unexpected error occurred.";
     let statusCode = 500;
     if (err instanceof Error) {
       errorMessage = err.message;
-      const lower = errorMessage.toLowerCase();
-      if (
-        lower.includes("model_decommissioned") ||
-        lower.includes("decommissioned") ||
-        lower.includes("model not found") ||
-        lower.includes("unknown model")
-      ) {
-        statusCode = 400;
-        errorMessage =
-          `The configured Groq model is unavailable or deprecated. ` +
-          `Set a supported model via GROQ_MODEL (e.g., \"llama-3.1-70b-versatile\", \"llama-3.1-8b-instant\", or \"deepseek-r1-distill-llama-70b\").`;
+      // Handle missing credentials explicitly
+      if (errorMessage.includes("Missing credentials") || errorMessage.includes("IncompleteSignature")) {
+        errorMessage = "AWS Credentials missing or invalid. Please check your .env file.";
+        statusCode = 500;
       }
     }
     return NextResponse.json({ error: errorMessage }, { status: statusCode });

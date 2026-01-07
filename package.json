@@ -12,6 +12,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.32.0",
     "@datastax/astra-db-ts": "^2.0.2",
+    "@langchain/aws": "^0.1.15",
     "@langchain/community": "^0.3.50",
     "@langchain/core": "^0.3.68",
     "@langchain/groq": "^0.2.3",
